@@ -1,52 +1,56 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Monitoring Suhu NodeMCU</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitoring Suhu & Kelembapan - ThingSpeak</title>
   <style>
-    body{font-family:Arial;text-align:center;background-color:#00c6ff;color:#fff;padding:40px}
-    .card{background:rgba(255,255,255,0.15);border-radius:12px;padding:20px;display:inline-block}
-    h1{margin-bottom:10px}
-    h2{margin:8px 0}
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: linear-gradient(to right, #0072ff, #00c6ff);
+      color: white;
+      padding: 40px;
+    }
+    .card {
+      background: rgba(255,255,255,0.2);
+      border-radius: 15px;
+      padding: 20px;
+      display: inline-block;
+      margin-top: 30px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+    .data { font-size: 1.8em; margin: 10px; }
   </style>
 </head>
 <body>
   <h1>🌡️ Monitoring Suhu & Kelembapan</h1>
   <div class="card">
-    <h2 id="suhu">Suhu: - °C</h2>
-    <h2 id="lembap">Kelembapan: - %</h2>
-    <p id="info" style="font-size:0.9em;color:#ffeb">Mengambil data...</p>
+    <div class="data">Suhu: <span id="suhu">-</span> °C</div>
+    <div class="data">Kelembapan: <span id="kelembapan">-</span> %</div>
   </div>
 
-<script>
-  // GANTI DENGAN IP NODEMCU (lihat Serial Monitor)
-  const NODEMCU_IP = "http://192.168.100.122";
+  <script>
+    const channelID = "3131989"; // GANTI DENGAN CHANNEL ID kamu
+    const readAPI = "5YYT2IWFL76TI32Z"; // GANTI DENGAN Read API Key kamu
 
-  async function ambilData(){
-    try{
-      const resp = await fetch(`${NODEMCU_IP}/data`, {cache: "no-store"});
-      if(!resp.ok){
-        document.getElementById("info").innerText = "Server merespon error: " + resp.status;
-        return;
+    async function ambilData() {
+      try {
+        const url = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPI}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        document.getElementById("suhu").textContent = data.field1;
+        document.getElementById("kelembapan").textContent = data.field2;
+      } catch (err) {
+        console.error("Gagal ambil data:", err);
+        document.getElementById("suhu").textContent = "Err";
+        document.getElementById("kelembapan").textContent = "Err";
       }
-      const json = await resp.json();
-      if(json.error){
-        document.getElementById("info").innerText = "Error sensor: " + json.error;
-        return;
-      }
-      document.getElementById("suhu").innerText = `Suhu: ${json.suhu} °C`;
-      document.getElementById("lembap").innerText = `Kelembapan: ${json.kelembapan} %`;
-      document.getElementById("info").innerText = "Terakhir diperbarui: " + new Date().toLocaleTimeString();
-    } catch(err){
-      document.getElementById("info").innerText = "Gagal ambil data: cek koneksi / IP / CORS";
-      console.error("fetch error:", err);
     }
-  }
 
-  // Jalankan lewat server lokal — jangan buka file langsung (file:///)
-  setInterval(ambilData, 2000);
-  ambilData();
-</script>
+    ambilData();
+    setInterval(ambilData, 15000); // update tiap 15 detik
+  </script>
 </body>
 </html>
