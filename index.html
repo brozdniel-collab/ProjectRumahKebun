@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Monitoring Suhu NodeMCU</title>
+  <style>
+    body{font-family:Arial;text-align:center;background-color:#00c6ff;color:#fff;padding:40px}
+    .card{background:rgba(255,255,255,0.15);border-radius:12px;padding:20px;display:inline-block}
+    h1{margin-bottom:10px}
+    h2{margin:8px 0}
+  </style>
+</head>
+<body>
+  <h1>🌡️ Monitoring Suhu & Kelembapan</h1>
+  <div class="card">
+    <h2 id="suhu">Suhu: - °C</h2>
+    <h2 id="lembap">Kelembapan: - %</h2>
+    <p id="info" style="font-size:0.9em;color:#ffeb">Mengambil data...</p>
+  </div>
+
+<script>
+  // GANTI DENGAN IP NODEMCU (lihat Serial Monitor)
+  const NODEMCU_IP = "http://192.168.100.122";
+
+  async function ambilData(){
+    try{
+      const resp = await fetch(`${NODEMCU_IP}/data`, {cache: "no-store"});
+      if(!resp.ok){
+        document.getElementById("info").innerText = "Server merespon error: " + resp.status;
+        return;
+      }
+      const json = await resp.json();
+      if(json.error){
+        document.getElementById("info").innerText = "Error sensor: " + json.error;
+        return;
+      }
+      document.getElementById("suhu").innerText = `Suhu: ${json.suhu} °C`;
+      document.getElementById("lembap").innerText = `Kelembapan: ${json.kelembapan} %`;
+      document.getElementById("info").innerText = "Terakhir diperbarui: " + new Date().toLocaleTimeString();
+    } catch(err){
+      document.getElementById("info").innerText = "Gagal ambil data: cek koneksi / IP / CORS";
+      console.error("fetch error:", err);
+    }
+  }
+
+  // Jalankan lewat server lokal — jangan buka file langsung (file:///)
+  setInterval(ambilData, 2000);
+  ambilData();
+</script>
+</body>
+</html>
